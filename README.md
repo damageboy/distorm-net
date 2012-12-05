@@ -1,0 +1,1 @@
+This is a .NET Wrapper of the distorm project for seamless decompilation of 32-bit and 64-bit intel binaries.
