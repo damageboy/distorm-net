@@ -6,15 +6,15 @@ namespace DiStorm
 {
   public class DecodedInst
   {
-    private DecodedInst()
+    internal DecodedInst()
     {
     }
 
-    private String mMnemonic;
-    private String mOperands;
-    private String mHex;
-    private int mSize;
-    private long mOffset;
+    internal String mMnemonic;
+    internal String mOperands;
+    internal String mHex;
+    internal uint mSize;
+    internal IntPtr mOffset;
 
     public String getMnemonic()
     {
@@ -31,12 +31,12 @@ namespace DiStorm
       return mHex;
     }
 
-    public int getSize()
+    public uint getSize()
     {
       return mSize;
     }
 
-    public long getOffset()
+    public IntPtr getOffset()
     {
       return mOffset;
     }

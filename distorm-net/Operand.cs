@@ -2,7 +2,7 @@
 namespace DiStorm
 {
 
-  public enum OperandType
+  public enum OperandType : byte
   {
     None,
     Reg,
@@ -18,13 +18,13 @@ namespace DiStorm
 
   public class Operand
   {
-    private int mType;
-    private int mIndex;
-    private int mSize;
+    public OperandType mType;
+    public int mIndex;
+    public int mSize;
 
     public OperandType getType()
     {
-      return (OperandType) mType;
+      return mType;
     }
 
     public int getIndex()

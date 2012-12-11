@@ -2,10 +2,10 @@ using DiStorm;
 
 public class DecomposedInst {
   public class ImmVariant {
-		private long mValue;
-		private int mSize;
+    public ulong mValue;
+    public int mSize;
 
-		public long getImm() {
+    public ulong getImm() {
 			return mValue;
 		}
 
@@ -15,11 +15,10 @@ public class DecomposedInst {
 	}
 
   public class DispVariant {
+    public ulong mDisplacement;
+    public int mSize;
 
-		private long mDisplacement;
-		private int mSize;
-
-		public long getDisplacement() {
+    public ulong getDisplacement() {
 			return mDisplacement;
 		}
 
@@ -28,21 +27,21 @@ public class DecomposedInst {
 		}
 	}
 
-	private long mAddr;
-	private int mSize;
-	private int mFlags;
-	private int mSegment;
-	private int mBase, mScale;
-	private int mOpcode;
+  public long mAddr;
+  public int mSize;
+  public int mFlags;
+  public int mSegment;
+  public int mBase, mScale;
+  public int mOpcode;
 	public Operand[] mOperands;
 	public DispVariant mDisp;
 	public ImmVariant mImm;
-	private int mUnusedPrefixesMask;
-	private int mMeta;
-	private int mRegistersMask;
-	private int mModifiedFlagsMask;
-	private int mTestedFlagsMask;
-	private int mUndefinedFlagsMask;
+  public int mUnusedPrefixesMask;
+  public int mMeta;
+  public int mRegistersMask;
+  public int mModifiedFlagsMask;
+  public int mTestedFlagsMask;
+  public int mUndefinedFlagsMask;
 
 	public long getAddress() {
 		return mAddr;

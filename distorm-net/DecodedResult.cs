@@ -9,6 +9,6 @@ namespace DiStorm
     }
 
     public DecodedInst[] mInstructions;
-    private int mMaxInstructions;
+    public int mMaxInstructions;
   }
 }

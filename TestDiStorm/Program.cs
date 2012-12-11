@@ -48,11 +48,11 @@ namespace TestDiStorm
 
     private static unsafe void Main(string[] args)
     {
-      Console.WriteLine("sizeof(native int)={0}", IntPtr.Size);
-      Console.WriteLine("sizeof(DiStorm3._DInst)={0}", sizeof(DiStorm3._DInst));
-      Console.WriteLine("sizeof(DiStorm3._CodeInfo)={0}", sizeof(DiStorm3._CodeInfo));
-      Console.WriteLine("sizeof(DiStorm3._Value)={0}", sizeof(DiStorm3._Value));
-      Console.WriteLine("sizeof(DiStorm3._Operand)={0}", sizeof(DiStorm3._Operand));
+      //Console.WriteLine("sizeof(native int)={0}", IntPtr.Size);
+      //Console.WriteLine("sizeof(DiStorm3._DInst)={0}", sizeof(DiStorm3._DInst));
+      //Console.WriteLine("sizeof(DiStorm3._CodeInfo)={0}", sizeof(DiStorm3._CodeInfo));
+      //Console.WriteLine("sizeof(DiStorm3._Value)={0}", sizeof(DiStorm3._Value));
+      //Console.WriteLine("sizeof(DiStorm3._Operand)={0}", sizeof(DiStorm3._Operand));
       var buf = new byte[4];
       buf[0] = (byte) 0xc3;
       buf[1] = (byte) 0x33;
@@ -73,9 +73,9 @@ namespace TestDiStorm
       foreach (var y in dr2.mInstructions) {
         if (y.getOpcode() != Opcode.RET)
         {
-          //var x = DiStorm3.Format(ci, y);
-          //var s = String.Format("{0:X} {1} {2}", x.getOffset(), x.getMnemonic(), x.getOperands());
-          //Console.WriteLine(s);
+          var x = DiStorm3.Format(ci, y);
+          var s = String.Format("{0:X} {1} {2}", x.getOffset(), x.getMnemonic(), x.getOperands());
+          Console.WriteLine(s);
         }
       }
 
