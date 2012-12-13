@@ -62,19 +62,19 @@ namespace TestDiStorm
       var dr = new DecodedResult(10);
       DiStorm3.Decode(ci, dr);
 
-      foreach (var x in dr.mInstructions) {
-        var s = String.Format("{0:X} {1} {2}", x.getOffset(), x.getMnemonic(), x.getOperands());
+      foreach (var x in dr.Instructions) {
+        var s = String.Format("{0:X} {1} {2}", x.Offset, x.Mnemonic, x.Operands);
         Console.WriteLine(s);
       }
 
       var dr2 = new DecomposedResult(10);
       DiStorm3.Decompose(ci, dr2);
 
-      foreach (var y in dr2.mInstructions) {
-        if (y.getOpcode() != Opcode.RET)
+      foreach (var y in dr2.Instructions) {
+        if (y.Opcode != Opcode.RET)
         {
           var x = DiStorm3.Format(ci, y);
-          var s = String.Format("{0:X} {1} {2}", x.getOffset(), x.getMnemonic(), x.getOperands());
+          var s = String.Format("{0:X} {1} {2}", x.Offset, x.Mnemonic, x.Operands);
           Console.WriteLine(s);
         }
       }

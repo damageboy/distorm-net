@@ -1,14 +1,14 @@
 
 namespace DiStorm
 {
-  public class DecodedResult {
+  public class DecodedResult 
+  {
     public DecodedResult(int maxInstructions) 
     {
-      mMaxInstructions = maxInstructions;
-      mInstructions = null;
+      MaxInstructions = maxInstructions;
+      Instructions = null;
     }
-
-    public DecodedInst[] mInstructions;
-    public int mMaxInstructions;
+    public DecodedInst[] Instructions { get; internal set; }
+    public int MaxInstructions { get; internal set; }
   }
 }

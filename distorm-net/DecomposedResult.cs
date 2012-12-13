@@ -4,11 +4,11 @@ namespace DiStorm
   {
     public DecomposedResult(int maxInstructions)
     {
-      mMaxInstructions = maxInstructions;
-      mInstructions = null;
+      MaxInstructions = maxInstructions;
+      Instructions = null;
     }
 
-    public DecomposedInst[] mInstructions;
-    public int mMaxInstructions;
+    public DecomposedInst[] Instructions { get; internal set; }
+    public int MaxInstructions { get; private set; }
   }
 }

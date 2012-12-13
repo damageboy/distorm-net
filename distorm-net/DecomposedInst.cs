@@ -1,6 +1,8 @@
+using System;
 using DiStorm;
 
-public class DecomposedInst {
+public class DecomposedInst 
+{
   public class ImmVariant {
     public ulong mValue;
     public int mSize;
@@ -13,7 +15,6 @@ public class DecomposedInst {
 			return mSize;
 		}
 	}
-
   public class DispVariant {
     public ulong mDisplacement;
     public int mSize;
@@ -26,60 +27,22 @@ public class DecomposedInst {
 			return mSize;
 		}
 	}
-
-  public long mAddr;
-  public int mSize;
-  public int mFlags;
-  public int mSegment;
-  public int mBase, mScale;
-  public int mOpcode;
-	public Operand[] mOperands;
-	public DispVariant mDisp;
-	public ImmVariant mImm;
-  public int mUnusedPrefixesMask;
-  public int mMeta;
-  public int mRegistersMask;
-  public int mModifiedFlagsMask;
-  public int mTestedFlagsMask;
-  public int mUndefinedFlagsMask;
-
-	public long getAddress() {
-		return mAddr;
-	}
-	public int getSize() {
-		return mSize;
-	}
-	public Opcode getOpcode() {
-		return (Opcode) mOpcode;
-	}
-	public int getSegment() {
-		return mSegment & 0x7f;
-	}
-	public bool isSegmentDefault() {
-		return (mSegment & 0x80) == 0x80;
-	}
-	public int getBase() {
-		return mBase;
-	}
-	public int getScale() {
-		return mScale;
-	}
-	public int getUnusedPrefixesMask() {
-		return mUnusedPrefixesMask;
-	}
-	public int getMeta() {
-		return mMeta;
-	}
-	public int getRegistersMask() {
-		return mRegistersMask;
-	}
-	public int getModifiedFlagsMask() {
-		return mModifiedFlagsMask;
-	}
-	public int getTestedFlagsMask() {
-		return mTestedFlagsMask;
-	}
-	public int getUndefinedFlagsMask() {
-		return mUndefinedFlagsMask;
-	}
+  internal int _segment;
+  public IntPtr Address { get; internal set; }
+  public ushort Flags { get; internal set; }
+  public int Size { get; internal set; }
+  public Opcode Opcode { get; internal set; }
+  public int Segment { get { return _segment & 0x7f; } }
+  public bool IsSegmentDefault { get { return (_segment & 0x80) == 0x80; } }
+  public int Base { get; internal set; }
+  public int Scale { get; internal set; }
+  public int UnusedPrefixesMask { get; internal set; }
+  public int Meta { get; internal set; }
+  public int RegistersMask { get; internal set; }
+  public int ModifiedFlagsMask { get; internal set; }
+  public int TestedFlagsMask { get; internal set; }
+  public int UndefinedFlagsMask { get; internal set; }
+  public ImmVariant Imm { get; internal set; }
+  public DispVariant Disp { get; internal set; }
+  public Operand[] Operands { get; internal set; }
 }

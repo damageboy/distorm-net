@@ -6,18 +6,18 @@ namespace DiStorm
   {
     public CodeInfo(long codeOffset, byte[] rawCode, DecodeType dt, int features)
     {
-      mCode = new byte[rawCode.Length];
-      Array.Copy(rawCode, mCode, mCode.Length);
+      _code = new byte[rawCode.Length];
+      Array.Copy(rawCode, _code, _code.Length);
 
-      mCodeOffset = codeOffset;
-      mDecodeType = dt;
-      mFeatures = features;
+      _codeOffset = codeOffset;
+      _decodeType = dt;
+      _features = features;
     }
 
-    internal long mCodeOffset;
-    internal long mNextOffset;
-    internal byte[] mCode;
-    internal DecodeType mDecodeType;
-    internal int mFeatures;
+    internal long _codeOffset;
+    internal long _nextOffset;
+    internal byte[] _code;
+    internal DecodeType _decodeType;
+    internal int _features;
   }
 }
