@@ -10,8 +10,8 @@ namespace TestDiStorm
     private static IntPtr LeakNativeMethodPtr(MethodInfo x)
     {
 
-      if ((x.MethodImplementationFlags & MethodImplAttributes.InternalCall) != 0)
-        Console.WriteLine("{0} is an InternalCall method. These methods always point to the same address.", x.Name);
+      //if ((x.MethodImplementationFlags & MethodImplAttributes.InternalCall) != 0)
+      //  Console.WriteLine("{0} is an InternalCall method. These methods always point to the same address.", x.Name);
       var domain = AppDomain.CurrentDomain;
       var dynAsm = new AssemblyName("MethodLeakAssembly");
       var asmBuilder = domain.DefineDynamicAssembly(dynAsm, AssemblyBuilderAccess.Run);
@@ -48,11 +48,6 @@ namespace TestDiStorm
 
     private static unsafe void Main(string[] args)
     {
-      //Console.WriteLine("sizeof(native int)={0}", IntPtr.Size);
-      //Console.WriteLine("sizeof(DiStorm3._DInst)={0}", sizeof(DiStorm3._DInst));
-      //Console.WriteLine("sizeof(DiStorm3._CodeInfo)={0}", sizeof(DiStorm3._CodeInfo));
-      //Console.WriteLine("sizeof(DiStorm3._Value)={0}", sizeof(DiStorm3._Value));
-      //Console.WriteLine("sizeof(DiStorm3._Operand)={0}", sizeof(DiStorm3._Operand));
       var buf = new byte[4];
       buf[0] = (byte) 0xc3;
       buf[1] = (byte) 0x33;

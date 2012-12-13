@@ -18,23 +18,8 @@ namespace DiStorm
 
   public class Operand
   {
-    public OperandType mType;
-    public int mIndex;
-    public int mSize;
-
-    public OperandType getType()
-    {
-      return mType;
-    }
-
-    public int getIndex()
-    {
-      return mIndex;
-    }
-
-    public int getSize()
-    {
-      return mSize;
-    }
+    public OperandType Type { get; internal set; }
+    public int Index { get; internal set; }
+    public int Size { get; internal set; }
   }
 }

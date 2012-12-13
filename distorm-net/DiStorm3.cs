@@ -21,7 +21,7 @@ namespace DiStorm
       internal byte* code;
       internal int codeLen; /* Using signed integer makes it easier to detect an underflow. */
       internal DecodeType dt;
-      internal int features;
+      internal int features;    
     };
 
     
@@ -173,7 +173,12 @@ namespace DiStorm
       return Marshal.AllocHGlobal(new IntPtr(sz)).ToPointer();
     }
 
-    private static unsafe _CodeInfo* AcquireCodeInfoStruct(CodeInfo nci)
+    private static unsafe void Free(void* mem)
+    {
+      Marshal.FreeHGlobal(new IntPtr(mem));
+    }
+
+    private static unsafe _CodeInfo* AcquireCodeInfoStruct(CodeInfo nci, out GCHandle gch)
     {
       var ci = (_CodeInfo*) Malloc(sizeof (_CodeInfo));
       if (ci == null)
@@ -183,12 +188,12 @@ namespace DiStorm
       //memset(ci, 0, sizeof(_CodeInfo));
 
       ci->codeOffset = new IntPtr(nci._codeOffset);
-      var gch = GCHandle.Alloc(nci._code, GCHandleType.Pinned);
+      gch = GCHandle.Alloc(nci._code, GCHandleType.Pinned);
 
       ci->code = (byte*) gch.AddrOfPinnedObject().ToPointer();
       ci->codeLen = nci._code.Length;
       ci->dt = nci._decodeType;
-      ci->features = nci._features;
+      ci->features = nci._features;      
       return ci;
     }
 
@@ -212,176 +217,195 @@ namespace DiStorm
     {	    
 	    _CodeInfo* ci = null;
       _DInst* insts = null;
-	    int maxInstructions = 0;
-	    int usedInstructionsCount = 0, i = 0, j = 0, operandsNo = 0;
-	    int success = 0;
+      var gch = new GCHandle();
+      var usedInstructionsCount = 0;
 
+      try
+      {
+        if ((ci = AcquireCodeInfoStruct(nci, out gch)) == null)        
+          throw new OutOfMemoryException();
 
+        var maxInstructions = ndr.MaxInstructions;
 
-	    ci = AcquireCodeInfoStruct(nci);
-	    if (ci == null) {
-	      throw new OutOfMemoryException();
-	    }
+        if ((insts = (_DInst*) Malloc(maxInstructions*sizeof (_DInst))) == null)
+          throw new OutOfMemoryException();
 
-      maxInstructions = ndr.MaxInstructions;
+        distorm_decompose64(ci, insts, maxInstructions, &usedInstructionsCount);
 
-	    insts = (_DInst*)Malloc(maxInstructions * sizeof(_DInst));
+        var dinsts = new DecomposedInst[usedInstructionsCount];
 
-	    distorm_decompose64(ci, insts, maxInstructions, &usedInstructionsCount);
+        for (var i = 0; i < usedInstructionsCount; i++) {
+          var di = new DecomposedInst {
+            Address = insts[i].addr,
+            Flags = insts[i].flags,
+            Size = insts[i].size,
+            _segment = insts[i].segment,
+            Base = insts[i].ibase,
+            Scale = insts[i].scale,
+            Opcode = (Opcode) insts[i].opcode,
+            UnusedPrefixesMask = insts[i].unusedPrefixesMask,
+            Meta = insts[i].meta,
+            RegistersMask = insts[i].usedRegistersMask,
+            ModifiedFlagsMask = insts[i].modifiedFlagsMask,
+            TestedFlagsMask = insts[i].testedFlagsMask,
+            UndefinedFlagsMask = insts[i].undefinedFlagsMask
+          };
 
-	    var dinsts = new DecomposedInst[usedInstructionsCount];
+          /* Simple fields: */
 
-      for (i = 0; i < usedInstructionsCount; i++) {
-	      var di = new DecomposedInst {
-          Address = insts[i].addr,
-          Flags = insts[i].flags,
-          Size = insts[i].size,
-          _segment = insts[i].segment,
-          Base = insts[i].ibase,
-          Scale = insts[i].scale,
-          Opcode = (Opcode) insts[i].opcode,
-          UnusedPrefixesMask = insts[i].unusedPrefixesMask,
-          Meta = insts[i].meta,
-          RegistersMask = insts[i].usedRegistersMask,
-          ModifiedFlagsMask = insts[i].modifiedFlagsMask,
-          TestedFlagsMask = insts[i].testedFlagsMask,
-          UndefinedFlagsMask = insts[i].undefinedFlagsMask
-        };
+          /* Immediate variant. */
+          var immVariant = new DecomposedInst.ImmVariant {
+            Imm = insts[i].imm.qword, 
+            Size = 0
+          };
+          /* The size of the immediate is in one of the operands, if at all. Look for it below. Zero by default. */
 
-		    /* Simple fields: */
+          /* Count operands. */
+          var operandsNo = 0;
+          for (operandsNo = 0; operandsNo < _DInst.OPERANDS_NO; operandsNo++)
+          {
+            if (insts[i].ops[operandsNo].type == OperandType.None)
+              break;
+          }
 
-        /* Immediate variant. */
-	      var immVariant = new DecomposedInst.ImmVariant();
-        immVariant.mValue = insts[i].imm.qword;
-		    /* The size of the immediate is in one of the operands, if at all. Look for it below. Zero by default. */
-        immVariant.mSize = 0;		
+          var ops = new Operand[operandsNo];
 
-		    /* Count operands. */
-		    for (operandsNo = 0; operandsNo < _DInst.OPERANDS_NO; operandsNo++) {
-			    if (insts[i].ops[operandsNo].type == OperandType.None) 
-            break;
-		    }
+          for (var j = 0; j < operandsNo; j++)
+          {
+            if (insts[i].ops[j].type == OperandType.Imm) {
+              /* Set the size of the immediate operand. */
+              immVariant.Size = insts[i].ops[j].size;
+            }
 
-	      var ops = new Operand[operandsNo];
+            var op = new Operand {
+              Type = insts[i].ops[j].type,
+              Index = insts[i].ops[j].index,
+              Size = insts[i].ops[j].size
+            };
 
-		    for (j = 0; j < operandsNo; j++) {
-			    if (insts[i].ops[j].type == OperandType.Imm) {
-				    /* Set the size of the immediate operand. */
-			      immVariant.mSize = insts[i].ops[j].size;				    
-			    }
+            ops[j] = op;
+          }
+          di.Operands = ops;
 
-		      var op = new Operand();
+          /* Attach the immediate variant. */
+          di.Imm = immVariant;
 
-		      op.mType = insts[i].ops[j].type;
-			    op.mIndex = insts[i].ops[j].index;
-			    op.mSize = insts[i].ops[j].size;
-		      ops[j] = op;			    
-		    }
-	      di.Operands = ops;		    
+          /* Displacement variant. */
+          var disp = new DecomposedInst.DispVariant {
+            Displacement = insts[i].disp,
+            Size = insts[i].dispSize
+          };
 
-		    /* Attach the immediate variant. */
-	      di.Imm = immVariant;
+          di.Disp = disp;
+          dinsts[i] = di;
+        }
 
-		    /* Displacement variant. */
-	      var disp = new DecomposedInst.DispVariant();
-
-	      disp.mDisplacement = insts[i].disp;
-	      disp.mSize = insts[i].dispSize;
-	      di.Disp = disp;
-        dinsts[i] = di;
-	    }
-
-	    ndr.Instructions = dinsts;
+        ndr.Instructions = dinsts;
+      }
+      finally
+      {
+        if (gch.IsAllocated)
+          gch.Free();
+        if (ci != null)
+          Free(ci);
+        if (insts != null)
+          Free(insts);
+      }
     }
 
     public static unsafe void Decode(CodeInfo nci, DecodedResult dr)
     {
       _CodeInfo* ci = null;
       _DecodedInst* insts = null;
-      var maxInstructions = 0;
-      uint usedInstructionsCount = 0, i = 0;
+      var gch = new GCHandle();
+      uint usedInstructionsCount = 0;
 
+      try
+      {
+        if ((ci = AcquireCodeInfoStruct(nci, out gch)) == null)
+          throw new OutOfMemoryException();
 
-      ci = AcquireCodeInfoStruct(nci);
-      if (ci == null)
-        throw new OutOfMemoryException();
+        var maxInstructions = dr.MaxInstructions;
 
-      maxInstructions = dr.MaxInstructions;
+        if ((insts = (_DecodedInst*) Malloc(maxInstructions*sizeof (_DecodedInst))) == null)
+          throw new OutOfMemoryException();
+        
+        distorm_decode64(ci->codeOffset, ci->code, ci->codeLen, ci->dt, insts, (uint) maxInstructions,
+                         &usedInstructionsCount);
 
-      insts = (_DecodedInst*) Malloc(maxInstructions*sizeof (_DecodedInst));
-      if (insts == null)
-        goto cleanup;
-
-      distorm_decode64(ci->codeOffset, ci->code, ci->codeLen, ci->dt, insts, (uint) maxInstructions,
-                       &usedInstructionsCount);
-
-      var dinsts = new DecodedInst[usedInstructionsCount];
-      if (dinsts == null)
-        goto cleanup;
-
-      for (i = 0; i < usedInstructionsCount; i++) {
-        if ((dinsts[i] = CreateDecodedInstObj(&insts[i])) == null)
-          goto cleanup;
+        var dinsts = new DecodedInst[usedInstructionsCount];
+        
+        for (var i = 0; i < usedInstructionsCount; i++)
+          dinsts[i] = CreateDecodedInstObj(&insts[i]);           
+        dr.Instructions = dinsts;
       }
-      dr.Instructions = dinsts;
-
-      cleanup:
-      /* In case of an error, jInsts will get cleaned automatically. */
-      Free(ci);
-      if (insts != null)
-        Free(insts);
+      finally {
+        /* In case of an error, jInsts will get cleaned automatically. */
+        if (gch.IsAllocated)
+          gch.Free();
+        if (ci != null)
+          Free(ci);
+        if (insts != null)
+          Free(insts);
+      }      
     }
 
-    private static unsafe void Free(void *insts)
-    {      
-    }
 
     public static unsafe DecodedInst Format(CodeInfo nci, DecomposedInst ndi)
     {    	
-      _DInst input = new _DInst();
-    	_DecodedInst output;
-    	
-      int i, opsCount;
-    
-    
-    	var ci = AcquireCodeInfoStruct(nci);
-    	if (ci == null)
-    		throw new OutOfMemoryException();
-    
-    	input.addr    = ndi.Address;
-      input.flags   = ndi.Flags;
-    	input.size    = (byte) ndi.Size;
-    	input.segment = (byte) ndi._segment;
-    	input.ibase   = (byte) ndi.Base;
-    	input.scale   = (byte) ndi.Scale;
-    	input.opcode  = (ushort) ndi.Opcode;
-    	/* unusedPrefixesMask is unused indeed, lol. */
-    	input.meta =    (byte) ndi.Meta;
-    	/* Nor usedRegistersMask. */
+      var input = new _DInst();
+      _CodeInfo *ci = null;
+      var gch = new GCHandle();
+      DecodedInst di;
 
-      opsCount = ndi.Operands.Length;
-    	for (i = 0; i < opsCount; i++) {
-    	  var op = ndi.Operands[i];
-    	  if (op == null) continue;
-    	  input.ops[i].index = (byte) op.mIndex;
-    	  input.ops[i].type = op.mType;
-    	  input.ops[i].size = (ushort) op.mSize;
-    	}
+      try
+      {
+        ci = AcquireCodeInfoStruct(nci, out gch);
+        if (ci == null)
+          throw new OutOfMemoryException();
 
-    	if (ndi.Imm != null)
-    		input.imm.qword = ndi.Imm.mValue;
-        	
-    	if (ndi.Disp != null) {
-    		input.disp = ndi.Disp.mDisplacement;
-    		input.dispSize = (byte) ndi.Disp.mSize;
-    	}
-    
-    	distorm_format64(ci, &input, &output);
-    
-    	var ret = CreateDecodedInstObj(&output);
-    
-      Free(ci);
-    	return ret;         
+        input.addr = ndi.Address;
+        input.flags = ndi.Flags;
+        input.size = (byte) ndi.Size;
+        input.segment = (byte) ndi._segment;
+        input.ibase = (byte) ndi.Base;
+        input.scale = (byte) ndi.Scale;
+        input.opcode = (ushort) ndi.Opcode;
+        /* unusedPrefixesMask is unused indeed, lol. */
+        input.meta = (byte) ndi.Meta;
+        /* Nor usedRegistersMask. */
+
+        int opsCount = ndi.Operands.Length;        
+        for (var i = 0; i < opsCount; i++) {
+          var op = ndi.Operands[i];
+          if (op == null) continue;
+          input.ops[i].index = (byte) op.Index;
+          input.ops[i].type = op.Type;
+          input.ops[i].size = (ushort) op.Size;
+        }
+
+        if (ndi.Imm != null)
+          input.imm.qword = ndi.Imm.Imm;
+
+        if (ndi.Disp != null)
+        {
+          input.disp = ndi.Disp.Displacement;
+          input.dispSize = (byte) ndi.Disp.Size;
+        }
+
+        _DecodedInst output;
+        distorm_format64(ci, &input, &output);
+
+        di = CreateDecodedInstObj(&output);
+      }
+      finally
+      {
+        if (gch.IsAllocated)
+          gch.Free();
+        if (ci != null)
+          Free(ci);
+      }
+      return di;         
     }
   }
 }
