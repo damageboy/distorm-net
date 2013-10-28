@@ -1,4 +1,6 @@
 
+using System;
+
 namespace DiStorm
 {
 
@@ -19,6 +21,13 @@ namespace DiStorm
   public class Operand
   {
     public OperandType Type { get; internal set; }
+    public Register Register { 
+      get {
+        if (Type != OperandType.Reg)
+          throw new ArgumentException("Operand is not a register");
+        return (Register) Index;
+      }
+    }
     public int Index { get; internal set; }
     public int Size { get; internal set; }
   }

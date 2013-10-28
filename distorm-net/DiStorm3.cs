@@ -197,6 +197,27 @@ namespace DiStorm
       return ci;
     }
 
+    private static unsafe _CodeInfo* AcquireCodeInfoStruct(UnsafeCodeInfo unci)
+    {
+      var ci = (_CodeInfo*)Malloc(sizeof(_CodeInfo));
+      if (ci == null)
+        throw new OutOfMemoryException();
+
+      Memset(ci, 0, sizeof(_CodeInfo));
+      //memset(ci, 0, sizeof(_CodeInfo));
+
+      ci->codeOffset = new IntPtr(unci._codeOffset);
+
+
+      ci->code = unci._code;
+      ci->codeLen = unci._codeLength;
+      ci->dt = unci._decodeType;
+      ci->features = unci._features;
+      return ci;
+    }
+
+
+
     private static unsafe DecodedInst CreateDecodedInstObj(_DecodedInst* inst)
     {
       return new DecodedInst {
@@ -211,7 +232,6 @@ namespace DiStorm
     private static unsafe void Memset(void *p, int v, int sz)
     {      
     }
-
 
     public static unsafe void Decompose(CodeInfo nci, DecomposedResult ndr)
     {	    
@@ -313,41 +333,54 @@ namespace DiStorm
       }
     }
 
-    public static unsafe void Decode(CodeInfo nci, DecodedResult dr)
+    public static unsafe void Decode(UnsafeCodeInfo unci, DecodedResult dr)
     {
       _CodeInfo* ci = null;
-      _DecodedInst* insts = null;
+
+      if ((ci = AcquireCodeInfoStruct(unci)) == null)
+        throw new OutOfMemoryException();
+      DecodeInternal(ci, dr);
+    }
+
+    public static unsafe void Decode(CodeInfo nci, DecodedResult dr)
+    {
       var gch = new GCHandle();
+      try {
+        var ci = AcquireCodeInfoStruct(nci, out gch);        
+        DecodeInternal(ci, dr);
+      }
+      finally {
+        if (gch.IsAllocated)
+          gch.Free();
+      }      
+    }
+
+    private static unsafe void DecodeInternal(_CodeInfo* ci, DecodedResult dr)
+    {
+      _DecodedInst* insts = null;
       uint usedInstructionsCount = 0;
 
-      try
-      {
-        if ((ci = AcquireCodeInfoStruct(nci, out gch)) == null)
-          throw new OutOfMemoryException();
+      var maxInstructions = dr.MaxInstructions;
 
-        var maxInstructions = dr.MaxInstructions;
-
+      try {
         if ((insts = (_DecodedInst*) Malloc(maxInstructions*sizeof (_DecodedInst))) == null)
           throw new OutOfMemoryException();
-        
+
         distorm_decode64(ci->codeOffset, ci->code, ci->codeLen, ci->dt, insts, (uint) maxInstructions,
-                         &usedInstructionsCount);
+          &usedInstructionsCount);
 
         var dinsts = new DecodedInst[usedInstructionsCount];
-        
+
         for (var i = 0; i < usedInstructionsCount; i++)
-          dinsts[i] = CreateDecodedInstObj(&insts[i]);           
+          dinsts[i] = CreateDecodedInstObj(&insts[i]);
         dr.Instructions = dinsts;
       }
       finally {
-        /* In case of an error, jInsts will get cleaned automatically. */
-        if (gch.IsAllocated)
-          gch.Free();
-        if (ci != null)
-          Free(ci);
         if (insts != null)
           Free(insts);
-      }      
+        if (ci != null)
+          Free(ci);        
+      }
     }
 
 
