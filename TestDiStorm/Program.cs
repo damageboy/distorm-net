@@ -54,18 +54,18 @@ namespace TestDiStorm
       buf[2] = (byte) 0xc0;
       buf[3] = (byte) 0xc3;
       var ci = new CodeInfo((long) 0x1000, buf, DecodeType.Decode32Bits, 0);
-      var dr = new DecodedResult(10);
-      DiStorm3.Decode(ci, dr);
+      var decoded = DiStorm3.Decode(ci, 10);
+      
 
-      foreach (var x in dr.Instructions) {
+      foreach (var x in decoded.Instructions) {
         var s = String.Format("{0:X} {1} {2}", x.Offset, x.Mnemonic, x.Operands);
         Console.WriteLine(s);
       }
 
-      var dr2 = new DecomposedResult(10);
-      DiStorm3.Decompose(ci, dr2);
+      var decomposed = DiStorm3.Decompose(ci, 10);
+      
 
-      foreach (var y in dr2.Instructions) {
+      foreach (var y in decomposed.Instructions) {
         if (y.Opcode != Opcode.RET)
         {
           var x = DiStorm3.Format(ci, y);

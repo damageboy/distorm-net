@@ -62,8 +62,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DecodedResult.cs" />
-    <Compile Include="DecomposedInst.cs" />
-    <Compile Include="DecodedInst.cs" />
+    <Compile Include="DecomposedInstruction.cs" />
+    <Compile Include="DecodedInstruction.cs" />
     <Compile Include="DecomposedResult.cs" />
     <Compile Include="Operand.cs" />
   </ItemGroup>

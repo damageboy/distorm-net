@@ -13,153 +13,9 @@ namespace DiStorm
 
   public class DiStorm3
   {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    internal unsafe struct _CodeInfo
-    {
-      internal IntPtr codeOffset; /* nextOffset is OUT only. */
-      internal IntPtr nextOffset; /* nextOffset is OUT only. */
-      internal byte* code;
-      internal int codeLen; /* Using signed integer makes it easier to detect an underflow. */
-      internal DecodeType dt;
-      internal int features;
-    };
-
-    internal struct _WString
-    {
-      public const int MAX_TEXT_SIZE = 48;
-      public uint length;
-      public unsafe fixed sbyte p[MAX_TEXT_SIZE]; /* p is a null terminated string. */
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    internal struct _DecodedInst
-    {
-	    public _WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
-	    public _WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
-	    public _WString instructionHex; /* Hex dump - little endian, including prefixes. */
-	    public uint size; /* Size of decoded instruction. */
-	    public IntPtr offset; /* Start offset of the decoded instruction. */
-    };
-
     /* Used by O_PTR: */
 
-    [StructLayout(LayoutKind.Explicit)]
-    public struct PtrStruct
-    {
-      private ushort seg;
-      /* Can be 16 or 32 bits, size is in ops[n].size. */
-      private uint off;
-    };
-
     /* Used by O_IMM1 (i1) and O_IMM2 (i2). ENTER instruction only. */
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct ExStruct
-    {
-      private uint i1;
-      private uint i2;
-    };
-
-    [StructLayout(LayoutKind.Explicit)]
-    internal struct _Value
-    {
-      /* Used by O_IMM: */
-      [FieldOffset(0)] public sbyte sbyt;
-      [FieldOffset(0)] public byte byt;
-      [FieldOffset(0)] public short sword;
-      [FieldOffset(0)] public ushort word;
-      [FieldOffset(0)] public int sdword;
-      [FieldOffset(0)] public uint dword;
-      [FieldOffset(0)] public long sqword; /* All immediates are SIGN-EXTENDED to 64 bits! */
-      [FieldOffset(0)] public ulong qword;
-      /* Used by O_PC: (Use GET_TARGET_ADDR).*/
-      [FieldOffset(0)] public IntPtr addr; /* It's a relative offset as for now. */
-      [FieldOffset(0)] public PtrStruct ptr;
-      [FieldOffset(0)] public ExStruct ex;
-    };
-
-    [StructLayout(LayoutKind.Explicit)]
-    internal struct _Operand
-    {
-      /* Type of operand:
-		    O_NONE: operand is to be ignored.
-		    O_REG: index holds global register index.
-		    O_IMM: instruction.imm.
-		    O_IMM1: instruction.imm.ex.i1.
-		    O_IMM2: instruction.imm.ex.i2.
-		    O_DISP: memory dereference with displacement only, instruction.disp.
-		    O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
-		    O_MEM: complex memory dereference (optional fields: s/i/b/disp).
-		    O_PC: the relative address of a branch instruction (instruction.imm.addr).
-		    O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
-	    */
-      public OperandType type; /* _OperandType */
-
-      /* Index of:
-		    O_REG: holds global register index
-		    O_SMEM: holds the 'base' register. E.G: [ECX], [EBX+0x1234] are both in operand.index.
-		    O_MEM: holds the 'index' register. E.G: [EAX*4] is in operand.index.
-	    */
-      public byte index;
-
-      /* Size of:
-		    O_REG: register
-		    O_IMM: instruction.imm
-		    O_IMM1: instruction.imm.ex.i1
-		    O_IMM2: instruction.imm.ex.i2
-		    O_DISP: instruction.disp
-		    O_SMEM: size of indirection.
-		    O_MEM: size of indirection.
-		    O_PC: size of the relative offset
-		    O_PTR: size of instruction.imm.ptr.off (16 or 32)
-	    */
-      public ushort size;
-    };
-
-    internal struct _DecomposedInst
-    {
-      public const int OPERANDS_NO = 4;
-      private const int OPERANDS_SIZE = 4*OPERANDS_NO;
-
-      /* Used by ops[n].type == O_IMM/O_IMM1&O_IMM2/O_PTR/O_PC. Its size is ops[n].size. */
-      internal _Value imm;
-      /* Used by ops[n].type == O_SMEM/O_MEM/O_DISP. Its size is dispSize. */
-      internal ulong disp;
-      /* Virtual address of first byte of instruction. */
-      internal IntPtr addr;
-      /* General flags of instruction, holds prefixes and more, if FLAG_NOT_DECODABLE, instruction is invalid. */
-      internal ushort flags;
-      /* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
-      internal ushort unusedPrefixesMask;
-      /* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
-      internal ushort usedRegistersMask;
-      /* ID of opcode in the global opcode table. Use for mnemonic look up. */
-      internal ushort opcode;
-      /* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
-      private unsafe fixed byte ops_storage[OPERANDS_SIZE];
-
-      internal unsafe _Operand* ops
-      {
-        get
-        {
-          fixed (byte* p = ops_storage)
-          {
-            return (_Operand*) p;
-          }
-        }
-      }
-      /* Size of the whole instruction. */
-      internal byte size;
-      /* Segment information of memory indirection, default segment, or overridden one, can be -1. Use SEGMENT macros. */
-      internal byte segment;
-      /* Used by ops[n].type == O_MEM. Base global register index (might be R_NONE), scale size (2/4/8), ignored for 0 or 1. */
-      internal byte ibase, scale;
-      internal byte dispSize;
-      /* Meta defines the instruction set class, and the flow control flags. Use META macros. */
-      internal byte meta;
-      /* The CPU flags that the instruction operates upon. */
-      internal byte modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
-    };
 
     [DllImport("distorm3")]
     private static extern unsafe void distorm_decompose64(void* codeInfo, void* dinsts, int maxInstructions, int* usedInstructions);
@@ -180,13 +36,13 @@ namespace DiStorm
       Marshal.FreeHGlobal(new IntPtr(mem));
     }
 
-    private static unsafe _CodeInfo* AcquireCodeInfoStruct(CodeInfo nci, out GCHandle gch)
+    private static unsafe CodeInfoStruct* AcquireCodeInfoStruct(CodeInfo nci, out GCHandle gch)
     {
-      var ci = (_CodeInfo*) Malloc(sizeof (_CodeInfo));
+      var ci = (CodeInfoStruct*) Malloc(sizeof (CodeInfoStruct));
       if (ci == null)
         throw new OutOfMemoryException();
 
-      Memset(ci, 0, sizeof (_CodeInfo));
+      Memset(ci, 0, sizeof (CodeInfoStruct));
 
       ci->codeOffset = new IntPtr(nci._codeOffset);
 
@@ -209,95 +65,23 @@ namespace DiStorm
     {
     }
 
-    public static unsafe void Decompose(CodeInfo nci, DecomposedResult ndr)
+    public static unsafe DecomposedResult Decompose(CodeInfo nci, int maxInstructions)
     {
-	    _CodeInfo* ci = null;
-      _DecomposedInst* insts = null;
+	    CodeInfoStruct* ci = null;
+      DecomposedInstructionStruct* insts = null;
       var gch = new GCHandle();
       var usedInstructionsCount = 0;
 
-      try
-      {
+      try {
         if ((ci = AcquireCodeInfoStruct(nci, out gch)) == null)
           throw new OutOfMemoryException();
 
-        var maxInstructions = ndr.MaxInstructions;
+        var dr = new DecomposedResult(maxInstructions);
 
-        if ((insts = (_DecomposedInst*) Malloc(maxInstructions*sizeof (_DecomposedInst))) == null)
-          throw new OutOfMemoryException();
 
-        distorm_decompose64(ci, insts, maxInstructions, &usedInstructionsCount);
-
-        var dinsts = new DecomposedInst[usedInstructionsCount];
-
-        for (var i = 0; i < usedInstructionsCount; i++) {
-          var srcInst = insts[i];
-          var di = new DecomposedInst {
-            Address = srcInst.addr,
-            Flags = srcInst.flags,
-            Size = srcInst.size,
-            _segment = srcInst.segment,
-            Base = srcInst.ibase,
-            Scale = srcInst.scale,
-            Opcode = (Opcode) srcInst.opcode,
-            UnusedPrefixesMask = srcInst.unusedPrefixesMask,
-            Meta = srcInst.meta,
-            RegistersMask = srcInst.usedRegistersMask,
-            ModifiedFlagsMask = srcInst.modifiedFlagsMask,
-            TestedFlagsMask = srcInst.testedFlagsMask,
-            UndefinedFlagsMask = srcInst.undefinedFlagsMask
-          };
-
-          /* Simple fields: */
-
-          /* Immediate variant. */
-          var immVariant = new DecomposedInst.ImmVariant {
-            Imm = srcInst.imm.qword,
-            Size = 0
-          };
-          /* The size of the immediate is in one of the operands, if at all. Look for it below. Zero by default. */
-
-          /* Count operands. */
-          var operandsNo = 0;
-          for (operandsNo = 0; operandsNo < _DecomposedInst.OPERANDS_NO; operandsNo++)
-          {
-            if (srcInst.ops[operandsNo].type == OperandType.None)
-              break;
-          }
-
-          var ops = new Operand[operandsNo];
-
-          for (var j = 0; j < operandsNo; j++) {
-            var srcOp = srcInst.ops[j];
-            if (srcOp.type == OperandType.Imm) {
-              /* Set the size of the immediate operand. */
-              immVariant.Size = srcInst.ops[j].size;
-            }
-
-            var op = new Operand {
-              Type = srcOp.type,
-              Index = srcOp.index,
-              Size = srcOp.size
-            };
-
-            ops[j] = op;
-          }
-          di.Operands = ops;
-
-          /* Attach the immediate variant. */
-          di.Imm = immVariant;
-
-          /* Displacement variant. */
-          var disp = new DecomposedInst.DispVariant {
-            Displacement = srcInst.disp,
-            Size = srcInst.dispSize
-          };
-
-          di.Disp = disp;
-          dinsts[i] = di;
-        }
-
-        ndr.Instructions = dinsts;
+        distorm_decompose64(ci, dr._instMemPtr, maxInstructions, &usedInstructionsCount);
+        dr.UsedInstructions = usedInstructionsCount;
+        return dr;
       }
       finally
       {
@@ -305,8 +89,6 @@ namespace DiStorm
           gch.Free();
         if (ci != null)
           Free(ci);
-        if (insts != null)
-          Free(insts);
       }
     }
 
@@ -314,17 +96,16 @@ namespace DiStorm
     {
       var gch = new GCHandle();
       uint usedInstructionsCount = 0;
-      _CodeInfo* ci = null;
+      CodeInfoStruct* ci = null;
       try {
 
         ci = AcquireCodeInfoStruct(nci, out gch);
         var dr = new DecodedResult(maxInstructions);
 
-        distorm_decode64(ci->codeOffset, ci->code, ci->codeLen, ci->dt, dr._instMemPtr, (uint) maxInstructions,
-          &usedInstructionsCount);
+        distorm_decode64(ci->codeOffset, ci->code, ci->codeLen, ci->dt, dr.InstructionsPointer, (uint) maxInstructions, &usedInstructionsCount);
 
         dr.UsedInstructionCount = (int) usedInstructionsCount;
-
+        return dr;
       }
       finally {
         if (gch.IsAllocated)
@@ -334,12 +115,12 @@ namespace DiStorm
       }
     }
 
-    public static unsafe DecodedInst Format(CodeInfo nci, DecomposedInst ndi)
+    public static unsafe DecodedInstruction Format(CodeInfo nci, DecomposedInstruction ndi)
     {
-      var input = new _DecomposedInst();
-      _CodeInfo *ci = null;
+      var input = new DecomposedInstructionStruct();
+      CodeInfoStruct *ci = null;
       var gch = new GCHandle();
-      DecodedInst di;
+      DecodedInstruction di;
 
       try
       {
@@ -376,10 +157,10 @@ namespace DiStorm
           input.dispSize = (byte) ndi.Disp.Size;
         }
 
-        _DecodedInst output;
+        DecodedInstructionStruct output;
         distorm_format64(ci, &input, &output);
 
-        di = CreateDecodedInstObj(&output);
+        di = DecodedInstruction.FromUnsafe(&output);
       }
       finally
       {
@@ -391,4 +172,148 @@ namespace DiStorm
       return di;
     }
   }
+
+  public struct DecomposedInstructionStruct
+  {
+    public const int OPERANDS_NO = 4;
+    private const int OPERANDS_SIZE = 4*OPERANDS_NO;
+
+    /* Used by ops[n].type == O_IMM/O_IMM1&O_IMM2/O_PTR/O_PC. Its size is ops[n].size. */
+    internal _Value imm;
+    /* Used by ops[n].type == O_SMEM/O_MEM/O_DISP. Its size is dispSize. */
+    internal ulong disp;
+    /* Virtual address of first byte of instruction. */
+    internal IntPtr addr;
+    /* General flags of instruction, holds prefixes and more, if FLAG_NOT_DECODABLE, instruction is invalid. */
+    internal ushort flags;
+    /* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
+    internal ushort unusedPrefixesMask;
+    /* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
+    internal ushort usedRegistersMask;
+    /* ID of opcode in the global opcode table. Use for mnemonic look up. */
+    internal ushort opcode;
+    /* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
+    private unsafe fixed byte ops_storage[OPERANDS_SIZE];
+
+    internal unsafe OperandStruct* ops
+    {
+      get
+      {
+        fixed (byte* p = ops_storage)
+        {
+          return (OperandStruct*) p;
+        }
+      }
+    }
+    /* Size of the whole instruction. */
+    internal byte size;
+    /* Segment information of memory indirection, default segment, or overridden one, can be -1. Use SEGMENT macros. */
+    internal byte segment;
+    /* Used by ops[n].type == O_MEM. Base global register index (might be R_NONE), scale size (2/4/8), ignored for 0 or 1. */
+    internal byte ibase, scale;
+    internal byte dispSize;
+    /* Meta defines the instruction set class, and the flow control flags. Use META macros. */
+    internal byte meta;
+    /* The CPU flags that the instruction operates upon. */
+    internal byte modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
+  };
+
+  [StructLayout(LayoutKind.Sequential)]
+  internal struct OperandStruct
+  {
+    /* Type of operand:
+		    O_NONE: operand is to be ignored.
+		    O_REG: index holds global register index.
+		    O_IMM: instruction.imm.
+		    O_IMM1: instruction.imm.ex.i1.
+		    O_IMM2: instruction.imm.ex.i2.
+		    O_DISP: memory dereference with displacement only, instruction.disp.
+		    O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
+		    O_MEM: complex memory dereference (optional fields: s/i/b/disp).
+		    O_PC: the relative address of a branch instruction (instruction.imm.addr).
+		    O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
+	    */
+    public OperandType type; /* _OperandType */
+
+    /* Index of:
+		    O_REG: holds global register index
+		    O_SMEM: holds the 'base' register. E.G: [ECX], [EBX+0x1234] are both in operand.index.
+		    O_MEM: holds the 'index' register. E.G: [EAX*4] is in operand.index.
+	    */
+    public byte index;
+
+    /* Size of:
+		    O_REG: register
+		    O_IMM: instruction.imm
+		    O_IMM1: instruction.imm.ex.i1
+		    O_IMM2: instruction.imm.ex.i2
+		    O_DISP: instruction.disp
+		    O_SMEM: size of indirection.
+		    O_MEM: size of indirection.
+		    O_PC: size of the relative offset
+		    O_PTR: size of instruction.imm.ptr.off (16 or 32)
+	    */
+    public ushort size;
+  };
+
+  [StructLayout(LayoutKind.Explicit)]
+  internal struct _Value
+  {
+    /* Used by O_IMM: */
+    [FieldOffset(0)] public sbyte sbyt;
+    [FieldOffset(0)] public byte byt;
+    [FieldOffset(0)] public short sword;
+    [FieldOffset(0)] public ushort word;
+    [FieldOffset(0)] public int sdword;
+    [FieldOffset(0)] public uint dword;
+    [FieldOffset(0)] public long sqword; /* All immediates are SIGN-EXTENDED to 64 bits! */
+    [FieldOffset(0)] public ulong qword;
+    /* Used by O_PC: (Use GET_TARGET_ADDR).*/
+    [FieldOffset(0)] public IntPtr addr; /* It's a relative offset as for now. */
+    [FieldOffset(0)] public PtrStruct ptr;
+    [FieldOffset(0)] public ExStruct ex;
+  };
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct ExStruct
+  {
+    private uint i1;
+    private uint i2;
+  };
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct PtrStruct
+  {
+    private ushort seg;
+    /* Can be 16 or 32 bits, size is in ops[n].size. */
+    private uint off;
+  };
+
+  public struct WStringStruct
+  {
+    public const int MAX_TEXT_SIZE = 48;
+    public uint length;
+    public unsafe fixed sbyte p[MAX_TEXT_SIZE]; /* p is a null terminated string. */
+  }
+
+  [StructLayout(LayoutKind.Sequential, Pack = 8)]
+  public struct DecodedInstructionStruct
+  {
+    public WStringStruct mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
+    public WStringStruct operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
+    public WStringStruct instructionHex; /* Hex dump - little endian, including prefixes. */
+    public uint size; /* Size of decoded instruction. */
+    public IntPtr offset; /* Start offset of the decoded instruction. */
+  };
+
+  [StructLayout(LayoutKind.Sequential, Pack = 8)]
+  internal unsafe struct CodeInfoStruct
+  {
+    internal IntPtr codeOffset; /* nextOffset is OUT only. */
+    internal IntPtr nextOffset; /* nextOffset is OUT only. */
+    internal byte* code;
+    internal int codeLen; /* Using signed integer makes it easier to detect an underflow. */
+    internal DecodeType dt;
+    internal int features;
+  };
 }
