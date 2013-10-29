@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace DiStorm
+namespace diStorm
 {
   public class CodeInfo
   {
-    public unsafe CodeInfo(long codeOffset, byte[] rawCode, DecodeType dt, int features)
+    public unsafe CodeInfo(long codeOffset, byte[] rawCode, DecodeType dt, int features = 0)
     {
       _code = rawCode;
       _codePtr = null;
@@ -13,7 +13,7 @@ namespace DiStorm
       _features = features;
     }
 
-    public unsafe CodeInfo(long codeOffset, byte *code, int codeLength, DecodeType dt, int features)
+    public unsafe CodeInfo(long codeOffset, byte *code, int codeLength, DecodeType dt, int features = 0)
     {
       _code = null;
       _codePtr = code;

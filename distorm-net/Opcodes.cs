@@ -1,9 +1,9 @@
 ﻿ 
  
 // This file was auto generated from the distrom opcodes.h file
-// on 2012-12-13 17:44:35.76
+// on 2013-10-29 13:40:47.655
 
-namespace DiStorm 
+namespace diStorm 
 { 
   public enum Opcode : ushort {
     UNDEFINED = 0,

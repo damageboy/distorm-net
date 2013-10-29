@@ -18,13 +18,13 @@
   var regRe = new Regex("typedef enum {(.+)} _RegisterType;", RegexOptions.Singleline);
   var m = instRe.Match(mnemonics);
   var insts = m.Groups[1].Value.Split(',').Select(x => new { 
-    Name = x.Split('=')[0].Trim().Substring(2),
+    Name = x.Split('=')[0].Trim().Substring(2),		
     Value = x.Split('=')[1].Trim(),
   }).ToArray();  
   m = regRe.Match(mnemonics, m.Index + m.Length);    
   var regs = m.Groups[1].Value.Split(',').Select(x => x.Trim()).ToArray();  
 #>
-namespace DiStorm 
+namespace diStorm 
 { 
   public enum Opcode : ushort {
 <# foreach (var i in insts) { #>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Reflection.Emit;
-using DiStorm;
+using diStorm;
 
 namespace TestDiStorm
 {
@@ -21,7 +21,7 @@ namespace TestDiStorm
       var methodBuilder = typeBuilder.DefineMethod("LeakNativeMethodPtr", MethodAttributes.Public | MethodAttributes.Static, typeof(IntPtr), null);
       var generator = methodBuilder.GetILGenerator();
 
-      // Push unmanaged pointer to MethodInfo onto the evaluation stack      
+      // Push unmanaged pointer to MethodInfo onto the evaluation stack
       generator.Emit(OpCodes.Ldftn, x);
       // Convert the pointer to type - unsigned int64
       //generator.Emit(OpCodes.Conv_Ovf_U);
@@ -45,8 +45,7 @@ namespace TestDiStorm
       return IntPtr.Zero;
     }
 
-
-    private static unsafe void Main(string[] args)
+    private static void Main(string[] args)
     {
       var buf = new byte[4];
       buf[0] = (byte) 0xc3;
@@ -54,26 +53,21 @@ namespace TestDiStorm
       buf[2] = (byte) 0xc0;
       buf[3] = (byte) 0xc3;
       var ci = new CodeInfo((long) 0x1000, buf, DecodeType.Decode32Bits, 0);
-      var decoded = DiStorm3.Decode(ci, 10);
-      
-
-      foreach (var x in decoded.Instructions) {
-        var s = String.Format("{0:X} {1} {2}", x.Offset, x.Mnemonic, x.Operands);
-        Console.WriteLine(s);
-      }
-
-      var decomposed = DiStorm3.Decompose(ci, 10);
-      
-
-      foreach (var y in decomposed.Instructions) {
-        if (y.Opcode != Opcode.RET)
-        {
-          var x = DiStorm3.Format(ci, y);
+      using (var decoded = DiStorm3.Decode(ci, 10)) {
+        foreach (var x in decoded.Instructions) {
           var s = String.Format("{0:X} {1} {2}", x.Offset, x.Mnemonic, x.Operands);
           Console.WriteLine(s);
         }
       }
 
+      using (var decomposed = DiStorm3.Decompose(ci, 10)) {
+        foreach (var y in decomposed.Instructions) {
+          if (y.Opcode == Opcode.RET) continue;
+          var x = DiStorm3.Format(ci, y);
+          var s = String.Format("{0:X} {1} {2}", x.Offset, x.Mnemonic, x.Operands);
+          Console.WriteLine(s);
+        }
+      }
     }
   }
 }

@@ -1,7 +1,7 @@
 
 using System;
 
-namespace DiStorm
+namespace diStorm
 {
 
   public enum OperandType : byte

@@ -1,6 +1,6 @@
 using System;
 
-namespace DiStorm
+namespace diStorm
 {
   public class DecodedInstruction {
 
@@ -20,11 +20,11 @@ namespace DiStorm
     {
       return new DecodedInstruction
       {
-        Mnemonic = new String(inst->mnemonic.p),
-        Operands = new String(inst->operands.p),
-        Hex = new string(inst->instructionHex.p),
-        Size = inst->size,
-        Offset = inst->offset
+        Mnemonic = new String(inst->Mnemonic.p),
+        Operands = new String(inst->Operands.p),
+        Hex = new string(inst->InstructionHex.p),
+        Size = inst->Size,
+        Offset = inst->Address
       };
     }
 
