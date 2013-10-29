@@ -55,7 +55,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\distorm-net\diStorm.csproj">
+    <ProjectReference Include="..\diStorm\diStorm.csproj">
       <Project>{137ADE63-2489-4235-91C6-6CB664CAB63F}</Project>
       <Name>diStorm</Name>
     </ProjectReference>

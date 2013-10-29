@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "diStorm", "distorm-net\diStorm.csproj", "{137ADE63-2489-4235-91C6-6CB664CAB63F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "diStorm", "diStorm\diStorm.csproj", "{137ADE63-2489-4235-91C6-6CB664CAB63F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "diStorm.Sample", "TestDiStorm\diStorm.Sample.csproj", "{2F2F3CBD-F968-47E4-ADEC-D42E42A924AC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "diStorm.Sample", "diStorm.Sample\diStorm.Sample.csproj", "{2F2F3CBD-F968-47E4-ADEC-D42E42A924AC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "diStorm.Tests", "diStorm.Tests\diStorm.Tests.csproj", "{DB494382-96CD-411E-9FD1-AD653895B55B}"
 EndProject
