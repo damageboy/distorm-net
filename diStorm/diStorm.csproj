@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="CodeInfo.cs" />
     <Compile Include="DiStorm3.cs" />
+    <Compile Include="EnumerableExtensions.cs" />
     <Compile Include="Opcodes.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

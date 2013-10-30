@@ -14,10 +14,10 @@ namespace diStorm
     }
 
     internal byte[] _instMem;
-    internal GCHandle _gch;
+    private GCHandle _gch;
     private readonly unsafe DecodedInstructionStruct *_instructionsPointer;
     private DecodedInstruction[] _instructions;
-    private bool _isDisposed;
+    internal bool _isDisposed;
 
     public unsafe DecodedInstruction[] Instructions
     {

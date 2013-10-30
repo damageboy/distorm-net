@@ -17,7 +17,7 @@ namespace diStorm
     private GCHandle _gch;
     private readonly unsafe DecomposedInstructionStruct* _instructionsPointer;
     private DecomposedInstruction[] _instructions;
-    private bool _isDisposed;
+    internal bool _isDisposed;
 
     public unsafe DecomposedInstruction[] Instructions
     {

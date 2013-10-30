@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Configuration;
+using System.Linq;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
 
@@ -9,7 +11,7 @@ namespace diStorm.Tests {
     private byte[] code = {0xc3, 0x33, 0xc0, 0xc3};
 
     [Test]
-    public unsafe void TestDecodeByteArray()
+    public unsafe void DecodeByteArray()
     {
       var ci = new CodeInfo(0x1000, code, DecodeType.Decode32Bits);
 
@@ -20,7 +22,7 @@ namespace diStorm.Tests {
     }
 
     [Test]
-    public unsafe void TestDecodeBytePointer()
+    public unsafe void DecodeBytePointer()
     {
       var gch = GCHandle.Alloc(code, GCHandleType.Pinned);
 
@@ -29,12 +31,11 @@ namespace diStorm.Tests {
         TestInstructionsUnmanaged(decoded.InstructionsPointer);
         TestInstructionsManaged(decoded.Instructions);
       }
-
       gch.Free();
     }
 
     [Test]
-    public unsafe void TestDecomposeByteArray()
+    public unsafe void DecomposeByteArray()
     {
       var ci = new CodeInfo(0x1000, code, DecodeType.Decode32Bits);
 
@@ -45,7 +46,7 @@ namespace diStorm.Tests {
     }
 
     [Test]
-    public unsafe void TestDecomposeBytePointer()
+    public unsafe void DecomposeBytePointer()
     {
       var gch = GCHandle.Alloc(code, GCHandleType.Pinned);
 
@@ -56,6 +57,48 @@ namespace diStorm.Tests {
       }
 
       gch.Free();
+    }
+
+    [Test]
+    public void DisposeDecodedResult()
+    {
+      var ci = new CodeInfo(0x1000, code, DecodeType.Decode32Bits);
+      var decoded = DiStorm3.Decode(ci, 10);
+      decoded.Dispose();
+      Assert.That(decoded._isDisposed);
+    }
+
+    [Test]
+    public void DisposeDecomposeResult()
+    {
+      var ci = new CodeInfo(0x1000, code, DecodeType.Decode32Bits);
+      var decomposed = DiStorm3.Decompose(ci, 10);
+      decomposed.Dispose();
+      Assert.That(decomposed._isDisposed);
+    }
+
+    [Test]
+    public void DisposeAfter()
+    {
+      var results =
+        Enumerable.Repeat(code, 4)
+          .Select(c => new CodeInfo(0x1000, c, DecodeType.Decode32Bits))
+          .Select(c => DiStorm3.Decode(c, 10)).ToArray();
+      var mnemonicCountQ = from ci in results.DisposeAfter()
+        from inst in ci.Instructions
+        group inst by inst.Mnemonic
+        into g
+        select new {
+          Mnemonic = g.Key,
+          Count = g.Count()
+        };
+
+      var mnemonicCounts = mnemonicCountQ.ToDictionary(x => x.Mnemonic, x => x.Count);
+
+      Assert.That(results.Select(r => r._isDisposed), Has.All.True);
+
+      Assert.That(mnemonicCounts["RET"], Is.EqualTo(8));
+      Assert.That(mnemonicCounts["XOR"], Is.EqualTo(4));
     }
 
     private static void TestInstructionsManaged(DecodedInstruction[] insts)
