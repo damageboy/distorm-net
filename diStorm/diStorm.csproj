@@ -31,6 +31,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>bin\Release\diStorm.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -68,6 +69,9 @@
     <Compile Include="DecodedInstruction.cs" />
     <Compile Include="DecomposedResult.cs" />
     <Compile Include="Operand.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="distorm.h" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\GitInfoPlanter.1.6.2\build\GitInfoPlanter.targets" Condition="Exists('..\packages\GitInfoPlanter.1.6.2\build\GitInfoPlanter.targets')" />

@@ -6,7 +6,7 @@ namespace diStorm
   {
     public class ImmVariant
     {
-      public ulong Imm { get; internal set; }
+      public ImmediateValue ImmediateValue { get; internal set; }
 
       public int Size { get; internal set; }
     }
@@ -47,9 +47,9 @@ namespace diStorm
 
     public int UndefinedFlagsMask { get; internal set; }
 
-    public ImmVariant Imm { get; internal set; }
+    public ImmVariant ImmediateValue { get; internal set; }
 
-    public DispVariant Disp { get; internal set; }
+    public DispVariant Displacement { get; internal set; }
 
     public Operand[] Operands { get; internal set; }
 
@@ -57,15 +57,15 @@ namespace diStorm
     {
       var di = new DecomposedInstruction {
         Address = srcInst->Address,
-        Flags = srcInst->flags,
+        Flags = srcInst->Flags,
         Size = srcInst->Size,
         _segment = srcInst->segment,
         Base = srcInst->ibase,
         Scale = srcInst->scale,
         Opcode = srcInst->Opcode,
-        UnusedPrefixesMask = srcInst->unusedPrefixesMask,
+        UnusedPrefixesMask = srcInst->UnusedPrefixesMask,
         Meta = srcInst->meta,
-        RegistersMask = srcInst->usedRegistersMask,
+        RegistersMask = srcInst->UsedRegistersMask,
         ModifiedFlagsMask = srcInst->modifiedFlagsMask,
         TestedFlagsMask = srcInst->testedFlagsMask,
         UndefinedFlagsMask = srcInst->undefinedFlagsMask
@@ -74,9 +74,8 @@ namespace diStorm
       /* Simple fields: */
 
       /* Immediate variant. */
-      var immVariant = new DecomposedInstruction.ImmVariant
-      {
-        Imm = srcInst->imm.qword,
+      var immVariant = new ImmVariant {
+        ImmediateValue = srcInst->ImmediateValue,
         Size = 0
       };
       /* The size of the immediate is in one of the operands, if at all. Look for it below. Zero by default. */
@@ -85,7 +84,7 @@ namespace diStorm
       var operandsNo = 0;
       for (operandsNo = 0; operandsNo < DecomposedInstructionStruct.OPERANDS_NO; operandsNo++)
       {
-        if (srcInst->ops[operandsNo].Type == OperandType.None)
+        if (srcInst->Operands[operandsNo].Type == OperandType.None)
           break;
       }
 
@@ -93,11 +92,11 @@ namespace diStorm
 
       for (var j = 0; j < operandsNo; j++)
       {
-        var srcOp = srcInst->ops[j];
-        if (srcOp.Type == OperandType.Imm)
+        var srcOp = srcInst->Operands[j];
+        if (srcOp.Type == OperandType.Immediate)
         {
           /* Set the size of the immediate operand. */
-          immVariant.Size = srcInst->ops[j].Size;
+          immVariant.Size = srcInst->Operands[j].Size;
         }
 
         var op = new Operand
@@ -112,16 +111,16 @@ namespace diStorm
       di.Operands = ops;
 
       /* Attach the immediate variant. */
-      di.Imm = immVariant;
+      di.ImmediateValue = immVariant;
 
       /* Displacement variant. */
-      var disp = new DecomposedInstruction.DispVariant
+      var disp = new DispVariant
       {
-        Displacement = srcInst->disp,
+        Displacement = srcInst->Displacement,
         Size = srcInst->dispSize
       };
 
-      di.Disp = disp;
+      di.Displacement = disp;
       return di;
     }
   }

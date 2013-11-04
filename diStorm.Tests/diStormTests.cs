@@ -115,11 +115,11 @@ namespace diStorm.Tests {
     private static unsafe void TestInstructionsUnmanaged(DecodedInstructionStruct *insts)
     {
       Assert.That(insts[0].Address.ToInt32(), Is.EqualTo(0x1000));
-      Assert.That(new String(insts[0].Mnemonic.p), Is.EqualTo("RET"));
+      Assert.That(new String(insts[0].Mnemonic.Bytes), Is.EqualTo("RET"));
       Assert.That(insts[1].Address.ToInt32(), Is.EqualTo(0x1001));
-      Assert.That(new String(insts[1].Mnemonic.p), Is.EqualTo("XOR"));
+      Assert.That(new String(insts[1].Mnemonic.Bytes), Is.EqualTo("XOR"));
       Assert.That(insts[2].Address.ToInt32(), Is.EqualTo(0x1003));
-      Assert.That(new String(insts[2].Mnemonic.p), Is.EqualTo("RET"));
+      Assert.That(new String(insts[2].Mnemonic.Bytes), Is.EqualTo("RET"));
     }
 
     private static unsafe void TestInstructionsUnmanaged(DecomposedInstructionStruct *insts)
@@ -129,12 +129,12 @@ namespace diStorm.Tests {
       Assert.That(insts[0].Size, Is.EqualTo(1));
       Assert.That(insts[1].Address.ToInt32(), Is.EqualTo(0x1001));
       Assert.That(insts[1].Opcode, Is.EqualTo(Opcode.XOR));
-      Assert.That(insts[1].ops[0].Type, Is.EqualTo(OperandType.Reg));
-      Assert.That(insts[1].ops[0].Register, Is.EqualTo(Register.R_EAX));
-      Assert.That(insts[1].ops[0].Size, Is.EqualTo(32));
-      Assert.That(insts[1].ops[1].Type, Is.EqualTo(OperandType.Reg));
-      Assert.That(insts[1].ops[1].Register, Is.EqualTo(Register.R_EAX));
-      Assert.That(insts[1].ops[1].Size, Is.EqualTo(32));
+      Assert.That(insts[1].Operands[0].Type, Is.EqualTo(OperandType.Register));
+      Assert.That(insts[1].Operands[0].Register, Is.EqualTo(Register.R_EAX));
+      Assert.That(insts[1].Operands[0].Size, Is.EqualTo(32));
+      Assert.That(insts[1].Operands[1].Type, Is.EqualTo(OperandType.Register));
+      Assert.That(insts[1].Operands[1].Register, Is.EqualTo(Register.R_EAX));
+      Assert.That(insts[1].Operands[1].Size, Is.EqualTo(32));
       Assert.That(insts[1].Size, Is.EqualTo(2));
       Assert.That(insts[2].Address.ToInt32(), Is.EqualTo(0x1003));
       Assert.That(insts[2].Opcode, Is.EqualTo(Opcode.RET));

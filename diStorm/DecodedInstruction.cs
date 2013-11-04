@@ -20,9 +20,9 @@ namespace diStorm
     {
       return new DecodedInstruction
       {
-        Mnemonic = new String(inst->Mnemonic.p),
-        Operands = new String(inst->Operands.p),
-        Hex = new string(inst->InstructionHex.p),
+        Mnemonic = new String(inst->Mnemonic.Bytes),
+        Operands = new String(inst->Operands.Bytes),
+        Hex = new string(inst->InstructionHex.Bytes),
         Size = inst->Size,
         Offset = inst->Address
       };

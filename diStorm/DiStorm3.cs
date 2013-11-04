@@ -127,7 +127,7 @@ namespace diStorm
           throw new OutOfMemoryException();
 
         input.Address = ndi.Address;
-        input.flags = ndi.Flags;
+        input.Flags = ndi.Flags;
         input.Size = (byte) ndi.Size;
         input.segment = (byte) ndi._segment;
         input.ibase = (byte) ndi.Base;
@@ -141,18 +141,18 @@ namespace diStorm
         for (var i = 0; i < opsCount; i++) {
           var op = ndi.Operands[i];
           if (op == null) continue;
-          input.ops[i].index = (byte) op.Index;
-          input.ops[i].Type = op.Type;
-          input.ops[i].Size = (ushort) op.Size;
+          input.Operands[i].index = (byte) op.Index;
+          input.Operands[i].Type = op.Type;
+          input.Operands[i].Size = (ushort) op.Size;
         }
 
-        if (ndi.Imm != null)
-          input.imm.qword = ndi.Imm.Imm;
+        if (ndi.ImmediateValue != null)
+          input.ImmediateValue = ndi.ImmediateValue.ImmediateValue;
 
-        if (ndi.Disp != null)
+        if (ndi.Displacement != null)
         {
-          input.disp = ndi.Disp.Displacement;
-          input.dispSize = (byte) ndi.Disp.Size;
+          input.Displacement = ndi.Displacement.Displacement;
+          input.dispSize = (byte) ndi.Displacement.Size;
         }
 
         DecodedInstructionStruct output;
@@ -177,28 +177,25 @@ namespace diStorm
     private const int OPERANDS_SIZE = 4*OPERANDS_NO;
 
     /* Used by ops[n].type == O_IMM/O_IMM1&O_IMM2/O_PTR/O_PC. Its size is ops[n].size. */
-    public _Value imm;
+    public ImmediateValue ImmediateValue;
     /* Used by ops[n].type == O_SMEM/O_MEM/O_DISP. Its size is dispSize. */
-    public ulong disp;
+    public ulong Displacement;
     /* Virtual address of first byte of instruction. */
     public IntPtr Address;
     /* General flags of instruction, holds prefixes and more, if FLAG_NOT_DECODABLE, instruction is invalid. */
-    public ushort flags;
+    public ushort Flags;
     /* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
-    public ushort unusedPrefixesMask;
+    public ushort UnusedPrefixesMask;
     /* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
-    public ushort usedRegistersMask;
+    public ushort UsedRegistersMask;
     /* ID of opcode in the global opcode table. Use for mnemonic look up. */
     public Opcode Opcode;
     /* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
-    private unsafe fixed byte ops_storage[OPERANDS_SIZE];
+    private unsafe fixed byte OperandStorage[OPERANDS_SIZE];
 
-    public unsafe OperandStruct* ops
-    {
-      get
-      {
-        fixed (byte* p = ops_storage)
-        {
+    public unsafe OperandStruct* Operands {
+      get {
+        fixed (byte* p = OperandStorage) {
           return (OperandStruct*) p;
         }
       }
@@ -219,18 +216,6 @@ namespace diStorm
   [StructLayout(LayoutKind.Sequential)]
   public struct OperandStruct
   {
-    /* Type of operand:
-		    O_NONE: operand is to be ignored.
-		    O_REG: index holds global register index.
-		    O_IMM: instruction.imm.
-		    O_IMM1: instruction.imm.ex.i1.
-		    O_IMM2: instruction.imm.ex.i2.
-		    O_DISP: memory dereference with displacement only, instruction.disp.
-		    O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
-		    O_MEM: complex memory dereference (optional fields: s/i/b/disp).
-		    O_PC: the relative address of a branch instruction (instruction.imm.addr).
-		    O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
-	    */
     public OperandType Type; /* _OperandType */
 
     /* Index of:
@@ -257,43 +242,41 @@ namespace diStorm
   };
 
   [StructLayout(LayoutKind.Explicit)]
-  public struct _Value
+  public struct ImmediateValue
   {
-    /* Used by O_IMM: */
-    [FieldOffset(0)] public sbyte sbyt;
-    [FieldOffset(0)] public byte byt;
-    [FieldOffset(0)] public short sword;
-    [FieldOffset(0)] public ushort word;
-    [FieldOffset(0)] public int sdword;
-    [FieldOffset(0)] public uint dword;
-    [FieldOffset(0)] public long sqword; /* All immediates are SIGN-EXTENDED to 64 bits! */
-    [FieldOffset(0)] public ulong qword;
-    /* Used by O_PC: (Use GET_TARGET_ADDR).*/
-    [FieldOffset(0)] public IntPtr addr; /* It's a relative offset as for now. */
-    [FieldOffset(0)] public PtrStruct ptr;
-    [FieldOffset(0)] public ExStruct ex;
+    [FieldOffset(0)] public sbyte SignedByte;
+    [FieldOffset(0)] public byte Byte;
+    [FieldOffset(0)] public short Short;
+    [FieldOffset(0)] public ushort UShort;
+    [FieldOffset(0)] public int Int;
+    [FieldOffset(0)] public uint UInt;
+    [FieldOffset(0)] public long Long;
+    [FieldOffset(0)] public ulong ULong;
+    [FieldOffset(0)] public IntPtr RelativeAddress;
+    [FieldOffset(0)] public ImmediatePointerStruct Pointer;
+    [FieldOffset(0)] public ExtraStruct Extra;
   };
 
   [StructLayout(LayoutKind.Sequential)]
-  public struct ExStruct
+  public struct ExtraStruct
   {
-    private uint i1;
-    private uint i2;
+    public uint I1;
+    public uint I2;
   };
 
   [StructLayout(LayoutKind.Sequential)]
-  public struct PtrStruct
+  public struct ImmediatePointerStruct
   {
-    private ushort seg;
+    public ushort Segment;
     /* Can be 16 or 32 bits, size is in ops[n].size. */
-    private uint off;
+    public uint Offset;
   };
 
   public struct WStringStruct
   {
     public const int MAX_TEXT_SIZE = 48;
-    public uint length;
-    public unsafe fixed sbyte p[MAX_TEXT_SIZE]; /* p is a null terminated string. */
+    public uint Length;
+    public unsafe fixed sbyte Bytes[MAX_TEXT_SIZE]; /* p is a null terminated string. */
   }
 
   [StructLayout(LayoutKind.Sequential, Pack = 8)]
